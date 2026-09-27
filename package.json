@@ -1,0 +1,9 @@
+{
+  "name": "hongburang-baseball",
+  "version": "1.0.0",
+  "private": true,
+  "description": "紅不讓棒球：一到兩人都能玩的網頁棒球小遊戲",
+  "scripts": {
+    "test": "node --test"
+  }
+}

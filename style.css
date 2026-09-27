@@ -1,0 +1,1051 @@
+/* 紅不讓棒球 — 夜間球場的手翻計分板配色（刻意只做深色一種外觀） */
+
+:root {
+  color-scheme: dark;
+  --ground: #06201a; /* 頁面底色：深墨綠 */
+  --board: #0d3a2b; /* 計分板綠 */
+  --board-hi: #134a39;
+  --rule: #235f4b;
+  --slot: #082a20; /* 還沒翻牌的空格、沒亮的燈 */
+  --plate: #f1ead3; /* 米白號碼牌 */
+  --plate-ink: #0b2c21;
+  --muted: #9dc0b1;
+  --amber: #f7b733; /* 燈泡黃 */
+  --amber-ink: #2d1d00;
+  --red: #ff5b45; /* 出局紅燈、紅不讓 */
+  --lamp-green: #5cdb8b; /* 壞球綠燈 */
+  --team-a: #6ab4ff; /* 1P／客隊 */
+  --team-b: #ff9061; /* 2P／電腦／主隊 */
+  --glass: rgba(3, 18, 13, 0.78);
+  --font-zh: "Chiron GoRound TC", "PingFang TC", "Microsoft JhengHei", "Noto Sans TC", system-ui, sans-serif;
+  --font-num: "Big Shoulders Display", "Arial Narrow", "Roboto Condensed", Impact, sans-serif;
+  --radius: 14px;
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+[hidden] {
+  display: none !important;
+}
+
+html {
+  height: 100%;
+  box-sizing: border-box;
+  background: var(--ground);
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: inherit;
+}
+
+body {
+  height: 100%;
+  margin: 0;
+  overflow: hidden;
+  background: var(--ground);
+  color: var(--plate);
+  font-family: var(--font-zh);
+  font-size: 15px;
+  line-height: 1.55;
+  -webkit-tap-highlight-color: transparent;
+}
+
+button {
+  font: inherit;
+  color: inherit;
+}
+
+:focus-visible {
+  outline: 2px solid var(--amber);
+  outline-offset: 2px;
+}
+
+kbd {
+  display: inline-block;
+  min-width: 1.6em;
+  margin: 0 1px;
+  padding: 0 0.35em;
+  border-radius: 4px;
+  background: var(--plate);
+  color: var(--plate-ink);
+  font-family: var(--font-num), var(--font-zh);
+  font-weight: 800;
+  font-size: 0.9em;
+  line-height: 1.5;
+  text-align: center;
+}
+
+/* ───────── 版面 ───────── */
+
+.app {
+  height: 100%;
+  max-width: 1440px;
+  margin-inline: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-inline: 16px;
+  padding-block: 12px;
+}
+
+/* ───────── 計分板 ───────── */
+
+.board {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px 22px;
+  padding: 10px 14px;
+  background: var(--board);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+  box-shadow: inset 0 0 0 3px var(--board-hi);
+}
+
+.board__title {
+  font-weight: 800;
+  font-size: 20px;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+}
+
+.board__title em,
+.menu__title em {
+  font-style: normal;
+  color: var(--red);
+}
+
+.board__score {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.line {
+  border-collapse: separate;
+  border-spacing: 3px;
+  font-family: var(--font-num);
+  font-variant-numeric: tabular-nums;
+}
+
+.line th {
+  padding: 0 5px;
+  color: var(--muted);
+  font-weight: 800;
+  font-size: 13px;
+  letter-spacing: 0.08em;
+  text-align: center;
+}
+
+.line th.team {
+  min-width: 3.4em;
+  padding-left: 0;
+  text-align: left;
+  font-family: var(--font-zh);
+  font-size: 14px;
+  letter-spacing: 0;
+  white-space: nowrap;
+}
+
+.line th.team--a {
+  color: var(--team-a);
+}
+
+.line th.team--b {
+  color: var(--team-b);
+}
+
+.line th.team.batting::after {
+  content: "";
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  margin-left: 6px;
+  border-radius: 50%;
+  background: var(--amber);
+  box-shadow: 0 0 6px var(--amber);
+  vertical-align: 2px;
+}
+
+.line td {
+  min-width: 26px;
+  height: 28px;
+  padding: 0 4px;
+  border-radius: 3px;
+  background: var(--slot);
+  color: var(--plate-ink);
+  font-weight: 800;
+  font-size: 19px;
+  line-height: 28px;
+  text-align: center;
+}
+
+.line td.on {
+  background: var(--plate);
+  box-shadow: inset 0 -2px 0 rgba(11, 44, 33, 0.18);
+}
+
+.line td.cur {
+  box-shadow: 0 0 0 2px var(--amber);
+}
+
+.line td.total {
+  min-width: 32px;
+  background: var(--slot);
+  color: var(--amber);
+  border: 1px solid var(--rule);
+}
+
+.line td.gap,
+.line th.gap {
+  min-width: 4px;
+  padding: 0;
+  background: none;
+}
+
+.board__status {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.inning {
+  display: flex;
+  align-items: baseline;
+  gap: 2px;
+  font-family: var(--font-num);
+  font-weight: 900;
+  line-height: 1;
+}
+
+.inning__half {
+  color: var(--amber);
+  font-size: 14px;
+}
+
+.inning__num {
+  font-size: 30px;
+  font-variant-numeric: tabular-nums;
+}
+
+.diamond {
+  width: 52px;
+  height: 36px;
+  overflow: visible;
+}
+
+.diamond .base {
+  fill: var(--slot);
+  stroke: var(--rule);
+  stroke-width: 1.5;
+  transition: fill 160ms;
+}
+
+.diamond .base.on {
+  fill: var(--amber);
+  stroke: var(--amber);
+  filter: drop-shadow(0 0 4px rgba(247, 183, 51, 0.7));
+}
+
+.count {
+  display: grid;
+  gap: 3px;
+  font-family: var(--font-num);
+}
+
+.count__row {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.count__row span {
+  width: 12px;
+  color: var(--muted);
+  font-weight: 800;
+  font-size: 13px;
+  line-height: 1;
+}
+
+.count__row i {
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  background: var(--slot);
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.6);
+  transition: background 140ms, box-shadow 140ms;
+}
+
+.count__row[data-k="b"] i.on {
+  background: var(--lamp-green);
+  box-shadow: 0 0 8px rgba(92, 219, 139, 0.8);
+}
+
+.count__row[data-k="s"] i.on {
+  background: var(--amber);
+  box-shadow: 0 0 8px rgba(247, 183, 51, 0.8);
+}
+
+.count__row[data-k="o"] i.on {
+  background: var(--red);
+  box-shadow: 0 0 8px rgba(255, 91, 69, 0.8);
+}
+
+.board__tools {
+  display: flex;
+  gap: 6px;
+  margin-left: auto;
+}
+
+.tool {
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  padding: 0;
+  border: 1px solid var(--rule);
+  border-radius: 10px;
+  background: var(--slot);
+  cursor: pointer;
+}
+
+.tool svg {
+  width: 20px;
+  height: 20px;
+  fill: var(--plate);
+}
+
+.tool .wave {
+  fill: none;
+  stroke: var(--plate);
+  stroke-width: 1.8;
+  stroke-linecap: round;
+}
+
+.tool[aria-pressed="false"] .wave {
+  display: none;
+}
+
+.tool:hover {
+  border-color: var(--muted);
+}
+
+/* 全壘打大賽的記分表 */
+.derby th,
+.derby td {
+  padding: 0 8px;
+}
+
+.derby td {
+  min-width: 44px;
+}
+
+/* ───────── 球場畫面 ───────── */
+
+.stage {
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+  background: #07102a;
+}
+
+.stage canvas {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  touch-action: none;
+  cursor: crosshair;
+}
+
+.tag {
+  position: absolute;
+  top: 10px;
+  max-width: calc(50% - 16px);
+  padding: 4px 11px;
+  border: 1px solid rgba(241, 234, 211, 0.14);
+  border-radius: 999px;
+  background: var(--glass);
+  font-size: 13px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  pointer-events: none;
+}
+
+.tag--matchup {
+  left: 10px;
+}
+
+.tag--gun {
+  right: 10px;
+}
+
+.tag--gun b {
+  font-family: var(--font-num);
+  font-weight: 900;
+  font-size: 18px;
+  line-height: 1;
+  color: var(--amber);
+  font-variant-numeric: tabular-nums;
+}
+
+.tag .a {
+  color: var(--team-a);
+  font-weight: 800;
+}
+
+.tag .b {
+  color: var(--team-b);
+  font-weight: 800;
+}
+
+.flash {
+  position: absolute;
+  left: 50%;
+  top: 16%;
+  transform: translateX(-50%);
+  font-weight: 800;
+  font-size: clamp(22px, 3.6vw, 38px);
+  letter-spacing: 0.06em;
+  white-space: nowrap;
+  text-shadow: 0 2px 0 rgba(0, 0, 0, 0.45), 0 0 18px rgba(0, 0, 0, 0.5);
+  pointer-events: none;
+  opacity: 0;
+}
+
+.flash.show {
+  animation: flash 1000ms ease-out both;
+}
+
+.flash--strike {
+  color: var(--amber);
+}
+
+.flash--ball {
+  color: var(--lamp-green);
+}
+
+.flash--good {
+  color: var(--plate);
+}
+
+@keyframes flash {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, 8px) scale(0.9);
+  }
+  14% {
+    opacity: 1;
+    transform: translate(-50%, 0) scale(1.06);
+  }
+  70% {
+    opacity: 1;
+    transform: translate(-50%, 0) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -6px) scale(1);
+  }
+}
+
+.banner {
+  position: absolute;
+  inset-inline: 12px;
+  top: 26%;
+  display: grid;
+  justify-items: center;
+  gap: 6px;
+  text-align: center;
+  pointer-events: none;
+}
+
+.banner__title {
+  font-weight: 800;
+  font-size: clamp(32px, 7vw, 78px);
+  line-height: 1.05;
+  letter-spacing: 0.04em;
+  text-wrap: balance;
+  text-shadow: 0 4px 0 rgba(0, 0, 0, 0.35), 0 0 30px rgba(0, 0, 0, 0.55);
+  animation: bannerIn 520ms cubic-bezier(0.2, 1.4, 0.4, 1) both;
+}
+
+.banner__sub {
+  max-width: 34em;
+  padding: 3px 14px;
+  border-radius: 999px;
+  background: var(--glass);
+  font-size: clamp(14px, 2vw, 19px);
+  animation: bannerIn 520ms 120ms cubic-bezier(0.2, 1.2, 0.4, 1) both;
+}
+
+.banner__sub:empty {
+  display: none;
+}
+
+.banner--hr .banner__title {
+  color: var(--amber);
+  font-size: clamp(40px, 10vw, 110px);
+}
+
+.banner--hit .banner__title {
+  color: var(--plate);
+}
+
+.banner--out .banner__title {
+  color: var(--muted);
+}
+
+.banner--change .banner__title {
+  color: var(--plate);
+}
+
+@keyframes bannerIn {
+  from {
+    opacity: 0;
+    transform: scale(0.6);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.legend {
+  position: absolute;
+  bottom: 12px;
+  max-width: min(330px, calc(100% - 24px));
+  padding: 10px 13px;
+  border: 1px solid var(--rule);
+  border-radius: 12px;
+  background: var(--glass);
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.legend--left {
+  left: 12px;
+}
+
+.legend--right {
+  right: 12px;
+}
+
+.legend h4 {
+  margin: 0 0 4px;
+  font-size: 14px;
+}
+
+.legend ol {
+  margin: 0;
+  padding-left: 1.2em;
+}
+
+.legend .keys {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px 10px;
+}
+
+.pad {
+  position: absolute;
+  left: 50%;
+  bottom: 12px;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: stretch;
+  gap: 8px;
+  max-width: calc(100% - 24px);
+}
+
+.pad__types {
+  display: flex;
+  gap: 6px;
+}
+
+.pad__type {
+  display: grid;
+  justify-items: center;
+  min-width: 66px;
+  padding: 6px 10px 5px;
+  border: 1px solid var(--rule);
+  border-radius: 10px;
+  background: var(--glass);
+  cursor: pointer;
+  line-height: 1.2;
+}
+
+.pad__type small {
+  color: var(--muted);
+  font-family: var(--font-num);
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+}
+
+.pad__type span {
+  font-weight: 800;
+  font-size: 15px;
+}
+
+.pad__type[aria-checked="true"] {
+  border-color: var(--plate);
+  background: var(--plate);
+  color: var(--plate-ink);
+}
+
+.pad__type[aria-checked="true"] small {
+  color: var(--plate-ink);
+}
+
+.pad__throw {
+  min-width: 84px;
+  padding: 0 16px;
+  border: 0;
+  border-radius: 10px;
+  background: var(--red);
+  color: #fff;
+  font-weight: 800;
+  font-size: 17px;
+  cursor: pointer;
+  box-shadow: 0 3px 0 #b8321f;
+}
+
+.pad__throw:active {
+  transform: translateY(2px);
+  box-shadow: 0 1px 0 #b8321f;
+}
+
+.hint {
+  position: absolute;
+  left: 50%;
+  bottom: 12px;
+  transform: translateX(-50%);
+  max-width: calc(100% - 24px);
+  padding: 4px 12px;
+  border-radius: 999px;
+  background: var(--glass);
+  color: var(--muted);
+  font-size: 13px;
+  text-align: center;
+  pointer-events: none;
+}
+
+.hint:empty {
+  display: none;
+}
+
+/* ───────── 選單與對話框 ───────── */
+
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 10;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  padding-top: max(16px, env(safe-area-inset-top, 0px));
+  padding-bottom: max(16px, env(safe-area-inset-bottom, 0px));
+  overflow-y: auto;
+  background: rgba(2, 14, 10, 0.74);
+  backdrop-filter: blur(3px);
+}
+
+.panel {
+  width: min(580px, 100%);
+  padding: 22px 22px 18px;
+  border: 1px solid var(--rule);
+  border-radius: 18px;
+  background: var(--board);
+  box-shadow: inset 0 0 0 3px var(--board-hi), 0 24px 70px rgba(0, 0, 0, 0.55);
+}
+
+.panel--small {
+  width: min(420px, 100%);
+}
+
+.kicker {
+  margin: 0;
+  color: var(--amber);
+  font-family: var(--font-num);
+  font-weight: 800;
+  font-size: 14px;
+  letter-spacing: 0.32em;
+  text-transform: uppercase;
+}
+
+.menu__title {
+  margin: 2px 0 6px;
+  font-weight: 800;
+  font-size: clamp(38px, 8vw, 58px);
+  line-height: 1.08;
+  letter-spacing: 0.03em;
+  text-wrap: balance;
+}
+
+.menu__lede {
+  max-width: 34em;
+  margin: 0 0 16px;
+  color: var(--muted);
+}
+
+.opts {
+  display: grid;
+  gap: 10px;
+  margin-bottom: 6px;
+}
+
+.opt {
+  display: grid;
+  grid-template-columns: 3.2em 1fr;
+  align-items: center;
+  gap: 10px;
+}
+
+.opt__label {
+  color: var(--muted);
+  font-size: 14px;
+  letter-spacing: 0.06em;
+}
+
+.seg {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.seg input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.seg label {
+  padding: 7px 14px;
+  border: 1px solid var(--rule);
+  border-radius: 9px;
+  background: var(--slot);
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 120ms, color 120ms;
+}
+
+.seg label:hover {
+  border-color: var(--muted);
+}
+
+.seg input:checked + label {
+  border-color: var(--plate);
+  background: var(--plate);
+  color: var(--plate-ink);
+}
+
+.seg input:focus-visible + label {
+  outline: 2px solid var(--amber);
+  outline-offset: 2px;
+}
+
+.menu__note {
+  min-height: 1.5em;
+  margin: 4px 0 14px;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.btn {
+  padding: 12px 20px;
+  border: 0;
+  border-radius: 11px;
+  font-weight: 800;
+  font-size: 17px;
+  cursor: pointer;
+}
+
+.btn--go {
+  width: 100%;
+  background: var(--amber);
+  color: var(--amber-ink);
+  box-shadow: 0 3px 0 #b07c10;
+}
+
+.btn--go:active {
+  transform: translateY(2px);
+  box-shadow: 0 1px 0 #b07c10;
+}
+
+.btn--ghost {
+  width: 100%;
+  border: 1px solid var(--rule);
+  background: var(--slot);
+  color: var(--plate);
+}
+
+.btn--ghost:hover {
+  border-color: var(--muted);
+}
+
+.stack {
+  display: grid;
+  gap: 8px;
+}
+
+.row {
+  display: flex;
+  gap: 8px;
+}
+
+.help {
+  margin-top: 14px;
+  border-top: 1px solid var(--rule);
+  padding-top: 10px;
+}
+
+.help summary {
+  color: var(--plate);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.help__body {
+  max-width: 62ch;
+  font-size: 14px;
+}
+
+.help h3 {
+  margin: 12px 0 2px;
+  color: var(--amber);
+  font-size: 15px;
+}
+
+.help p,
+.help ul {
+  margin: 4px 0;
+}
+
+.help ul {
+  padding-left: 1.2em;
+}
+
+.help li {
+  margin: 3px 0;
+}
+
+.help .tip {
+  color: var(--muted);
+}
+
+.rotate-note {
+  display: none;
+  margin: 12px 0 0;
+  color: var(--muted);
+  font-size: 13px;
+  text-align: center;
+}
+
+.panel__title {
+  margin: 0 0 14px;
+  font-size: 24px;
+}
+
+.simlog {
+  display: grid;
+  gap: 4px;
+  max-height: 46vh;
+  margin: 0 0 16px;
+  padding: 0;
+  overflow-y: auto;
+  list-style: none;
+  counter-reset: pa;
+}
+
+.simlog li {
+  display: flex;
+  gap: 10px;
+  padding: 6px 10px;
+  border-radius: 8px;
+  background: var(--slot);
+}
+
+.simlog li::before {
+  counter-increment: pa;
+  content: counter(pa);
+  min-width: 1.2em;
+  color: var(--muted);
+  font-family: var(--font-num);
+  font-weight: 800;
+}
+
+.simlog li.score {
+  background: rgba(255, 144, 97, 0.14);
+  color: var(--team-b);
+  font-weight: 800;
+}
+
+.simlog li.score::before {
+  content: "";
+  counter-increment: none;
+}
+
+.simlog li.hit {
+  color: var(--plate);
+  font-weight: 600;
+}
+
+.simlog li.out {
+  color: var(--muted);
+}
+
+.over__title {
+  margin: 2px 0 10px;
+  font-size: clamp(30px, 6vw, 44px);
+  line-height: 1.1;
+  text-wrap: balance;
+}
+
+.over__score {
+  margin-bottom: 12px;
+  overflow-x: auto;
+}
+
+.stats {
+  width: 100%;
+  margin-bottom: 10px;
+  border-collapse: collapse;
+  font-variant-numeric: tabular-nums;
+}
+
+.stats th,
+.stats td {
+  padding: 6px 8px;
+  border-bottom: 1px solid var(--rule);
+  text-align: center;
+}
+
+.stats th {
+  color: var(--muted);
+  font-weight: 600;
+  font-size: 13px;
+}
+
+.stats td {
+  font-family: var(--font-num), var(--font-zh);
+  font-weight: 800;
+  font-size: 20px;
+}
+
+.stats td.name {
+  font-family: var(--font-zh);
+  font-size: 15px;
+  text-align: left;
+}
+
+.over__note {
+  min-height: 1.5em;
+  margin: 0 0 14px;
+  color: var(--muted);
+}
+
+/* ───────── 小螢幕 ───────── */
+
+@media (max-width: 720px) {
+  .board__title {
+    display: none;
+  }
+  .board {
+    gap: 8px 14px;
+    padding: 8px 10px;
+  }
+  .line td {
+    min-width: 22px;
+    height: 24px;
+    font-size: 16px;
+    line-height: 24px;
+  }
+  .pad__type {
+    min-width: 54px;
+    padding: 5px 6px;
+  }
+  .pad__type span {
+    font-size: 14px;
+  }
+  .pad__throw {
+    min-width: 64px;
+    font-size: 16px;
+  }
+}
+
+@media (max-width: 480px) {
+  .app {
+    gap: 8px;
+    padding-block: 8px;
+  }
+  .line .inn {
+    display: none;
+  }
+  .pad {
+    flex-direction: column;
+    align-items: center;
+  }
+  .pad__throw {
+    width: 100%;
+    min-height: 40px;
+  }
+  .opt {
+    grid-template-columns: 1fr;
+    gap: 4px;
+  }
+  .rotate-note {
+    display: block;
+  }
+}
+
+@media (max-height: 520px) {
+  .app {
+    gap: 6px;
+    padding-block: 6px;
+  }
+  .board__title {
+    display: none;
+  }
+  .board {
+    padding: 5px 10px;
+  }
+  .line td {
+    height: 22px;
+    font-size: 15px;
+    line-height: 22px;
+  }
+  .line th {
+    font-size: 11px;
+  }
+  .inning__num {
+    font-size: 24px;
+  }
+  .tool {
+    width: 32px;
+    height: 32px;
+  }
+  .panel {
+    padding: 16px;
+  }
+  .menu__lede {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .banner__title,
+  .banner__sub {
+    animation-duration: 1ms;
+  }
+  .flash.show {
+    animation: none;
+    opacity: 1;
+  }
+}

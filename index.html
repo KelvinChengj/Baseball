@@ -1,0 +1,170 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>紅不讓棒球</title>
+<meta name="description" content="一到兩人都能玩的網頁棒球小遊戲：對戰賽、全壘打大賽，鍵盤、滑鼠、觸控都能玩。">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@700;800;900&amp;family=Chiron+GoRound+TC:wght@400;600;800&amp;display=swap">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="app" id="app">
+  <header class="board" id="board">
+    <div class="board__title"><em>紅不讓</em>棒球</div>
+    <div class="board__score" id="scoreWrap">
+      <table class="line" id="line" aria-label="比分"></table>
+    </div>
+    <div class="board__status" id="status">
+      <div class="inning" id="inning" aria-label="局數"><span class="inning__half" id="inningHalf">▲</span><span class="inning__num" id="inningNum">1</span></div>
+      <svg class="diamond" id="diamond" viewBox="0 0 64 44" role="img" aria-label="壘包">
+        <rect class="base" data-base="2" x="25" y="3" width="14" height="14" rx="2" transform="rotate(45 32 10)"/>
+        <rect class="base" data-base="3" x="7" y="21" width="14" height="14" rx="2" transform="rotate(45 14 28)"/>
+        <rect class="base" data-base="1" x="43" y="21" width="14" height="14" rx="2" transform="rotate(45 50 28)"/>
+      </svg>
+      <div class="count" id="count" aria-label="球數">
+        <div class="count__row" data-k="b"><span>B</span><i></i><i></i><i></i></div>
+        <div class="count__row" data-k="s"><span>S</span><i></i><i></i></div>
+        <div class="count__row" data-k="o"><span>O</span><i></i><i></i></div>
+      </div>
+    </div>
+    <div class="board__tools">
+      <button class="tool" id="btnSound" type="button" aria-label="音效：開" aria-pressed="true">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9h4l5-4v14l-5-4H4z"/><path class="wave" d="M16 8.5a5 5 0 0 1 0 7M18.5 6a8.5 8.5 0 0 1 0 12"/></svg>
+      </button>
+      <button class="tool" id="btnPause" type="button" aria-label="暫停">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 5h3.5v14H7zM13.5 5H17v14h-3.5z"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <main class="stage" id="stage">
+    <canvas id="view" aria-label="球場畫面"></canvas>
+    <div class="tag tag--matchup" id="matchup" hidden></div>
+    <div class="tag tag--gun" id="gun" hidden></div>
+    <div class="flash" id="flash" aria-live="polite"></div>
+    <div class="banner" id="banner" hidden>
+      <div class="banner__title" id="bannerTitle"></div>
+      <div class="banner__sub" id="bannerSub"></div>
+    </div>
+    <div class="legend" id="legend" hidden></div>
+    <div class="pad" id="pad" hidden>
+      <div class="pad__types" id="padTypes" role="radiogroup" aria-label="球種"></div>
+      <button class="pad__throw" id="btnThrow" type="button">投球</button>
+    </div>
+    <div class="hint" id="hint"></div>
+  </main>
+</div>
+
+<section class="overlay" id="menu" aria-labelledby="menuTitle">
+  <div class="panel panel--menu">
+    <p class="kicker">Home Run Baseball</p>
+    <h1 class="menu__title" id="menuTitle"><em>紅不讓</em>棒球</h1>
+    <p class="menu__lede">一個人對電腦，或兩個人一起玩。看準來球、抓好時機，把球打出全壘打牆。</p>
+
+    <div class="opts">
+      <div class="opt" role="radiogroup" aria-labelledby="optModeLabel">
+        <span class="opt__label" id="optModeLabel">模式</span>
+        <div class="seg">
+          <input type="radio" name="mode" id="modeGame" value="game" checked><label for="modeGame">對戰賽</label>
+          <input type="radio" name="mode" id="modeDerby" value="derby"><label for="modeDerby">全壘打大賽</label>
+        </div>
+      </div>
+      <div class="opt" role="radiogroup" aria-labelledby="optPlayersLabel">
+        <span class="opt__label" id="optPlayersLabel">人數</span>
+        <div class="seg">
+          <input type="radio" name="players" id="players1" value="1" checked><label for="players1">1 人</label>
+          <input type="radio" name="players" id="players2" value="2"><label for="players2">2 人</label>
+        </div>
+      </div>
+      <div class="opt" role="radiogroup" aria-labelledby="optInningsLabel" data-for="game">
+        <span class="opt__label" id="optInningsLabel">局數</span>
+        <div class="seg">
+          <input type="radio" name="innings" id="innings1" value="1"><label for="innings1">1 局</label>
+          <input type="radio" name="innings" id="innings3" value="3" checked><label for="innings3">3 局</label>
+          <input type="radio" name="innings" id="innings5" value="5"><label for="innings5">5 局</label>
+        </div>
+      </div>
+      <div class="opt" role="radiogroup" aria-labelledby="optPitchLabel" data-for="game">
+        <span class="opt__label" id="optPitchLabel">投球</span>
+        <div class="seg">
+          <input type="radio" name="pitching" id="pitchHuman" value="human" checked><label for="pitchHuman">玩家投球</label>
+          <input type="radio" name="pitching" id="pitchCpu" value="cpu"><label for="pitchCpu">電腦代投</label>
+        </div>
+      </div>
+      <div class="opt" role="radiogroup" aria-labelledby="optLevelLabel">
+        <span class="opt__label" id="optLevelLabel">難度</span>
+        <div class="seg">
+          <input type="radio" name="level" id="levelEasy" value="easy"><label for="levelEasy">簡單</label>
+          <input type="radio" name="level" id="levelNormal" value="normal" checked><label for="levelNormal">普通</label>
+          <input type="radio" name="level" id="levelHard" value="hard"><label for="levelHard">困難</label>
+        </div>
+      </div>
+    </div>
+    <p class="menu__note" id="menuNote"></p>
+
+    <button class="btn btn--go" id="btnStart" type="button">開始比賽</button>
+
+    <details class="help" id="help">
+      <summary>操作說明</summary>
+      <div class="help__body">
+        <h3>打擊</h3>
+        <p>移動打擊圈對準來球，球進到本壘板時揮棒。</p>
+        <ul>
+          <li><b>鍵盤</b>：1P 用 <kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> 移動、<kbd>F</kbd> 或 <kbd>空白鍵</kbd> 揮棒；2P 用方向鍵移動、<kbd>Enter</kbd> 揮棒。一個人玩時兩組都能用。</li>
+          <li><b>滑鼠</b>：打擊圈跟著滑鼠走，點一下揮棒。</li>
+          <li><b>觸控</b>：球到的時候，直接點球的位置。</li>
+        </ul>
+        <p class="tip">揮早了會拉打到左外野，揮晚了會推打到右外野，差太多就是界外球。打擊圈稍微放在球的下方，比較容易打出高飛球和全壘打。</p>
+        <h3>投球</h3>
+        <ul>
+          <li><b>對電腦</b>：按 <kbd>1</kbd>～<kbd>4</kbd> 或點按鈕選球種，移動捕手手套決定進壘點，再按揮棒鍵或「投球」。</li>
+          <li><b>兩人用鍵盤對戰</b>：對手看不到你的選擇。按住方向鍵再按投球鍵選球種（<kbd>↑</kbd> 直球、<kbd>→</kbd> 滑球、<kbd>↓</kbd> 曲球、<kbd>←</kbd> 變速球，不按是直球），抬腿投球時按住方向鍵決定進壘點，不按就是正中間。</li>
+        </ul>
+        <h3>其他</h3>
+        <p><kbd>Esc</kbd> 或 <kbd>P</kbd> 暫停。球場動畫播放中按揮棒鍵或點畫面可以快轉。</p>
+      </div>
+    </details>
+    <p class="rotate-note">手機橫放玩起來更順手。</p>
+  </div>
+</section>
+
+<section class="overlay" id="pause" hidden aria-labelledby="pauseTitle">
+  <div class="panel panel--small">
+    <h2 class="panel__title" id="pauseTitle">暫停</h2>
+    <div class="stack">
+      <button class="btn btn--go" id="btnResume" type="button">繼續比賽</button>
+      <button class="btn btn--ghost" id="btnRestart" type="button">重新開始</button>
+      <button class="btn btn--ghost" id="btnQuit" type="button">回主選單</button>
+    </div>
+  </div>
+</section>
+
+<section class="overlay" id="sim" hidden aria-labelledby="simTitle">
+  <div class="panel panel--small">
+    <h2 class="panel__title" id="simTitle">電腦進攻</h2>
+    <ol class="simlog" id="simLog"></ol>
+    <button class="btn btn--go" id="btnSimOk" type="button">換我打擊</button>
+  </div>
+</section>
+
+<section class="overlay" id="over" hidden aria-labelledby="overTitle">
+  <div class="panel">
+    <p class="kicker" id="overKicker">比賽結束</p>
+    <h2 class="over__title" id="overTitle"></h2>
+    <div class="over__score" id="overScore"></div>
+    <table class="stats" id="overStats"></table>
+    <p class="over__note" id="overNote"></p>
+    <div class="row">
+      <button class="btn btn--go" id="btnAgain" type="button">再來一場</button>
+      <button class="btn btn--ghost" id="btnMenu" type="button">回主選單</button>
+    </div>
+  </div>
+</section>
+
+<script src="js/core.js"></script>
+<script src="js/game.js"></script>
+</body>
+</html>
